@@ -1,4 +1,4 @@
-# AT49F512 Interactive Hardware Lab & Flash Programmer Learning Project
+# AT49F512 Flash Programmer & Hardware Analysis Lab
 
 An interactive, browser-based engineering lab for learning the **Atmel AT49F512** 512Kbit / 64Kbyte 5V parallel NOR Flash memory.
 
