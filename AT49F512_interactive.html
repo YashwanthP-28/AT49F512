@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AT49F512 Interactive Hardware Lab</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --panel: #111827;
+  --panel2: #0f172a;
+  --border: #334155;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --good: #4ade80;
+  --warn: #facc15;
+  --bad: #f87171;
+  --mono: Consolas, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  line-height: 1.45;
+}
+
+header {
+  padding: 18px 20px 10px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #0f172a, #0b1220);
+}
+
+h1 {
+  margin: 0 0 6px;
+  font-size: 1.55rem;
+}
+
+.subtle {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(15, 23, 42, 0.75);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+nav button {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+nav button:hover { border-color: var(--accent); }
+nav button.active { background: var(--accent); color: #04121a; border-color: var(--accent); }
+
+main { padding: 18px; }
+
+section.tab { display: none; max-width: 1400px; margin: 0 auto; }
+section.tab.active { display: block; }
+
+.grid { display: grid; gap: 14px; }
+.grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 950px) {
+  .grid.cols-2, .grid.cols-3, .grid.cols-4 { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.card h2, .card h3 { margin-top: 0; }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1.05rem; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.8rem;
+  margin: 2px 4px 2px 0;
+  color: var(--muted);
+}
+
+.good { color: var(--good); }
+.warn { color: var(--warn); }
+.bad { color: var(--bad); }
+.accent { color: var(--accent); }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 7px 8px;
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.93rem;
+}
+
+th { background: rgba(56, 189, 248, 0.08); }
+
+.mono, code, pre, input, select, textarea {
+  font-family: var(--mono);
+}
+
+pre {
+  background: #020617;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  overflow-x: auto;
+}
+
+input, select, textarea, button {
+  background: #020617;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+}
+
+button {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+button:hover { border-color: var(--accent); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+button.primary { background: var(--accent); color: #04121a; border-color: var(--accent); }
+button.danger { background: #7f1d1d; border-color: #b91c1c; }
+button.small { padding: 5px 8px; font-size: 0.85rem; }
+
+textarea {
+  width: 100%;
+  min-height: 220px;
+  resize: vertical;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.spacer { flex: 1; }
+
+.pin-address { background: rgba(56, 189, 248, 0.08); }
+.pin-data { background: rgba(74, 222, 128, 0.08); }
+.pin-control { background: rgba(250, 204, 21, 0.08); }
+.pin-power { background: rgba(248, 113, 113, 0.08); }
+.pin-nc { background: rgba(148, 163, 184, 0.08); }
+
+tr.active-cycle {
+  outline: 2px solid var(--accent);
+  background: rgba(56, 189, 248, 0.14);
+}
+
+.byte {
+  min-width: 42px;
+  text-align: center;
+  padding: 4px 5px;
+}
+
+.byte.selected {
+  outline: 2px solid var(--accent);
+  background: rgba(56, 189, 248, 0.16);
+}
+
+.memory-block {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--panel2);
+  cursor: pointer;
+}
+
+.memory-block:hover { border-color: var(--accent); }
+
+.checklist label {
+  display: block;
+  margin: 7px 0;
+  cursor: pointer;
+}
+
+.progress {
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.tiny { font-size: 0.82rem; color: var(--muted); }
+
+.footer {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AT49F512 Hardware Reverse Engineering & Flash Programmer — Interactive Lab</h1>
+  <div class="subtle">
+    Atmel AT49F512 — 512Kbit / 64Kbyte / 64K × 8 — 5V parallel Flash.
+    This page is an interactive companion to the datasheet-based lab project.
+  </div>
+  <div class="row">
+    <span class="badge">[DATASHEET] = directly from AT49F512 datasheet</span>
+    <span class="badge">[ENGINEERING KNOWLEDGE] = general electronics knowledge</span>
+    <span class="badge">[DESIGN RECOMMENDATION] = practical recommendation</span>
+    <span class="badge">[INFERENCE] = derived behavior</span>
+  </div>
+</header>
+
+<nav>
+  <button data-tab="overview" class="active">Overview</button>
+  <button data-tab="memory">Memory Map</button>
+  <button data-tab="pinout">Pinout</button>
+  <button data-tab="bus">Bus States</button>
+  <button data-tab="commands">Commands</button>
+  <button data-tab="simulator">Flash Simulator</button>
+  <button data-tab="hex">Hex Inspector</button>
+  <button data-tab="bit">Bit Rule Checker</button>
+  <button data-tab="timing">Timing</button>
+  <button data-tab="safety">Safety</button>
+  <button data-tab="workflow">Workflow</button>
+</nav>
+
+<main>
+
+<!-- =========================== OVERVIEW =========================== -->
+<section id="overview" class="tab active">
+  <div class="grid cols-3">
+    <div class="card">
+      <h2>Device identity</h2>
+      <table>
+        <tr><th>Part</th><td>AT49F512</td></tr>
+        <tr><th>Type</th><td>5-volt-only in-system programmable/erasable Flash [DATASHEET]</td></tr>
+        <tr><th>Density</th><td>512Kbit [DATASHEET]</td></tr>
+        <tr><th>Organization</th><td>65,536 × 8 bits = 64Kbytes [DATASHEET]</td></tr>
+        <tr><th>Address range</th><td>0x0000 → 0xFFFF</td></tr>
+        <tr><th>Address lines</th><td>A0–A15 = 16 bits [DATASHEET]</td></tr>
+        <tr><th>Data lines</th><td>I/O0–I/O7 = 8 bits [DATASHEET]</td></tr>
+        <tr><th>VCC</th><td>5V ±10% [DATASHEET]</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Important size distinction</h2>
+      <table>
+        <tr><th>512Kbit</th><td>524,288 bits</td></tr>
+        <tr><th>64Kbyte</th><td>65,536 bytes</td></tr>
+        <tr><th>64K × 8</th><td>65,536 byte locations, each 8 bits wide</td></tr>
+      </table>
+      <p class="tiny">
+        The datasheet says: “Its 512K of memory is organized as 65,536 words by 8 bits.” [DATASHEET]
+      </p>
+      <p>
+        <strong>Do not confuse 512Kbit with 512Kbyte.</strong>
+        This chip is 64Kbyte, not 512Kbyte.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Key datasheet features</h2>
+      <ul>
+        <li>5V read, 5V reprogramming [DATASHEET]</li>
+        <li>Fast read access time: 55 ns for -55 parts [DATASHEET]</li>
+        <li>Internal program control and timer [DATASHEET]</li>
+        <li>8K byte boot block with lockout [DATASHEET]</li>
+        <li>Fast erase cycle time: 10 seconds [DATASHEET]</li>
+        <li>Byte-by-byte programming: 10 µs/byte typical [DATASHEET]</li>
+        <li>DATA polling for end of program detection [DATASHEET]</li>
+        <li>Typical 10,000 write cycles [DATASHEET]</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>Read operation</h2>
+      <pre>READ:
+CE = LOW
+OE = LOW
+WE = HIGH
+
+Selected address appears on A0-A15.
+Flash drives I/O0-I/O7 with stored byte. [DATASHEET]</pre>
+      <p class="tiny">
+        Outputs are high impedance whenever CE or OE is high. [DATASHEET]
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Program/erase model</h2>
+      <pre>Erased state = logical 1, usually 0xFF. [DATASHEET]
+Programming changes bits toward 0. [DATASHEET]
+A programmed 0 cannot be programmed back to 1. [DATASHEET]
+Only erase can convert 0s back to 1s. [DATASHEET]</pre>
+      <p>
+        The interactive <strong>Bit Rule Checker</strong> tab lets you test whether a byte change
+        can be done without erase.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Product identification</h2>
+    <table>
+      <tr>
+        <th>Manufacturer code</th>
+        <td>0x1F [DATASHEET]</td>
+      </tr>
+      <tr>
+        <th>Device code</th>
+        <td>0x03 [DATASHEET]</td>
+      </tr>
+      <tr>
+        <th>Software ID entry</th>
+        <td>5555:AA → 2AAA:55 → 5555:90 [DATASHEET]</td>
+      </tr>
+      <tr>
+        <th>Software ID exit</th>
+        <td>5555:AA → 2AAA:55 → 5555:F0, or any address:F0 [DATASHEET]</td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<!-- =========================== MEMORY MAP =========================== -->
+<section id="memory" class="tab">
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>Memory map</h2>
+      <pre>
++-----------------------------+ 0xFFFF
+|                             |
+| Main memory area            |
+| 56K bytes if boot used      |
+| 0x2000 to 0xFFFF            |
+|                             |
++-----------------------------+ 0x2000
+|                             |
+| Boot block                  |
+| 8K bytes                    |
+| 0x0000 to 0x1FFF            |
+|                             |
++-----------------------------+ 0x0000
+      </pre>
+      <p class="tiny">
+        Boot block address range is 0000H to 1FFFH. [DATASHEET]
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Interactive map</h2>
+
+      <div class="memory-block" onclick="gotoAddress(0x0000)">
+        <h3>Boot block</h3>
+        <div>0x0000 → 0x1FFF</div>
+        <div>8K bytes [DATASHEET]</div>
+        <div class="warn">Can be permanently locked by boot block lockout. [DATASHEET]</div>
+      </div>
+
+      <br />
+
+      <div class="memory-block" onclick="gotoAddress(0x2000)">
+        <h3>Main memory</h3>
+        <div>0x2000 → 0xFFFF</div>
+        <div>56K bytes if boot block is used [DATASHEET]</div>
+        <div class="good">Usually safer for first programming experiments.</div>
+      </div>
+
+      <div class="row">
+        <button onclick="gotoAddress(0x0000)">Open 0x0000 in Hex Inspector</button>
+        <button onclick="gotoAddress(0x2000)">Open 0x2000 in Hex Inspector</button>
+        <button onclick="gotoAddress(0xFFFF)">Open 0xFFFF in Hex Inspector</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Why 16 address bits?</h2>
+    <table>
+      <tr><th>Bytes</th><td>65,536</td></tr>
+      <tr><th>Equation</th><td>2^16 = 65,536</td></tr>
+      <tr><th>Required address bits</th><td>16</td></tr>
+      <tr><th>Pins</th><td>A0 through A15 [DATASHEET]</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- =========================== PINOUT =========================== -->
+<section id="pinout" class="tab">
+  <div class="card">
+    <h2>32T TSOP / 32V VSOP pinout</h2>
+    <p class="warn">
+      Do not wire a physical chip until package and pin 1 are confirmed.
+      The following table is for the 32T TSOP / 32V VSOP pin arrangement shown in the datasheet. [DATASHEET]
+    </p>
+
+    <div class="row">
+      <button onclick="renderPins('all')">All</button>
+      <button onclick="renderPins('address')">Address</button>
+      <button onclick="renderPins('data')">Data</button>
+      <button onclick="renderPins('control')">Control</button>
+      <button onclick="renderPins('power')">Power</button>
+      <button onclick="renderPins('nc')">NC</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Pin</th>
+          <th>Name</th>
+          <th>Group</th>
+          <th>During READ</th>
+          <th>During PROGRAM / COMMAND</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="pinTbody"></tbody>
+    </table>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>Pin 1 identification</h2>
+      <ul>
+        <li>TSOP/VSOP package drawings show a Pin 1 identifier. [DATASHEET]</li>
+        <li>PLCC package drawing also references a pin no. 1 identifier. [DATASHEET]</li>
+        <li>Look for a dot, bevel, cut corner, or molded identifier. [ENGINEERING KNOWLEDGE]</li>
+        <li>Never assume orientation from memory alone. [DESIGN RECOMMENDATION]</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>PLCC caution</h2>
+      <p>
+        The supplied datasheet text includes a PLCC diagram, but the extracted text is not as clean as the TSOP/VSOP table.
+        For a physical PLCC part, confirm pin 1 and pin assignment from a clear photo and the original datasheet drawing
+        before wiring.
+      </p>
+      <p class="bad">
+        Incorrect pinout can damage the chip.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== BUS STATES =========================== -->
+<section id="bus" class="tab">
+  <div class="card">
+    <h2>Parallel bus architecture</h2>
+    <pre>
+              ADDRESS BUS
+Controller ─────────────────→ A0-A15
+Controller ←────────────────→ I/O0-I/O7
+Controller ─────────────────→ CE
+Controller ─────────────────→ OE
+Controller ─────────────────→ WE
+    </pre>
+    <p>
+      The address bus selects one byte location. The bidirectional I/O bus carries the byte.
+      The controller drives the bus during command/program writes. The Flash drives the bus during reads.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Interactive bus state selector</h2>
+
+    <div class="row">
+      <label for="busMode">Mode:</label>
+      <select id="busMode" onchange="updateBus()">
+        <option value="read">Read</option>
+        <option value="program">Program / Command write</option>
+        <option value="standby">Standby / write inhibit</option>
+        <option value="outputDisable">Output disable</option>
+        <option value="idRead">Product ID read</option>
+      </select>
+    </div>
+
+    <table>
+      <tr><th>CE</th><td id="busCE"></td></tr>
+      <tr><th>OE</th><td id="busOE"></td></tr>
+      <tr><th>WE</th><td id="busWE"></td></tr>
+      <tr><th>Data bus driver</th><td id="busDriver"></td></tr>
+      <tr><th>Notes</th><td id="busNotes"></td></tr>
+    </table>
+
+    <p class="tiny">
+      Control states are based on the datasheet operating modes. [DATASHEET]
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Example: read address 0x1234</h2>
+    <pre>
+0x1234 = 0001 0010 0011 0100 binary
+
+A15 A14 A13 A12 A11 A10 A9 A8 A7 A6 A5 A4 A3 A2 A1 A0
+  0   0   0   1   0   0  1  0  0  0  1  1  0  1  0  0
+
+CE = LOW
+OE = LOW
+WE = HIGH
+I/O0-I/O7 = data stored at 0x1234 after access time
+    </pre>
+    <p class="tiny">
+      For AT49F512-55: tACC max 55 ns, tCE max 55 ns, tOE max 30 ns. [DATASHEET]
+    </p>
+  </div>
+</section>
+
+<!-- =========================== COMMANDS =========================== -->
+<section id="commands" class="tab">
+  <div class="card">
+    <h2>Command definition table</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Command</th>
+          <th>Cycles</th>
+          <th>Sequence</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Read</td>
+          <td>1</td>
+          <td>Addr → DOUT [DATASHEET]</td>
+        </tr>
+        <tr>
+          <td>Chip Erase</td>
+          <td>6</td>
+          <td>5555:AA → 2AAA:55 → 5555:80 → 5555:AA → 2AAA:55 → 5555:10 [DATASHEET]</td>
+        </tr>
+        <tr>
+          <td>Byte Program</td>
+          <td>4</td>
+          <td>5555:AA → 2AAA:55 → 5555:A0 → Addr:DIN [DATASHEET]</td>
+        </tr>
+        <tr>
+          <td>Boot Block Lockout</td>
+          <td>6</td>
+          <td>5555:AA → 2AAA:55 → 5555:80 → 5555:AA → 2AAA:55 → 5555:40 [DATASHEET]</td>
+        </tr>
+        <tr>
+          <td>Product ID Entry</td>
+          <td>3</td>
+          <td>5555:AA → 2AAA:55 → 5555:90 [DATASHEET]</td>
+        </tr>
+        <tr>
+          <td>Product ID Exit</td>
+          <td>3 or 1</td>
+          <td>5555:AA → 2AAA:55 → 5555:F0, or any address:F0 [DATASHEET]</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Interactive command sequence player</h2>
+
+    <div class="row">
+      <label for="cmdSelect">Command:</label>
+      <select id="cmdSelect" onchange="loadCommand()">
+        <option value="read">Read</option>
+        <option value="byteProgram">Byte Program</option>
+        <option value="chipErase">Chip Erase</option>
+        <option value="idEntry">Product ID Entry</option>
+        <option value="idExit">Product ID Exit</option>
+        <option value="lockout">Boot Block Lockout</option>
+      </select>
+
+      <label for="cmdAddr">Target Addr:</label>
+      <input id="cmdAddr" value="2000" size="6" />
+
+      <label for="cmdData">Target Data:</label>
+      <input id="cmdData" value="55" size="4" />
+
+      <button onclick="loadCommand()">Load</button>
+      <button onclick="stepCommand()">Step</button>
+      <button onclick="resetCommand()">Reset</button>
+      <button id="applyCmd" onclick="applyCommand()" disabled>Apply to Simulator</button>
+    </div>
+
+    <div class="row">
+      <div>Status: <span id="cmdStatus" class="accent">Ready</span></div>
+      <div class="spacer"></div>
+      <div>Bus: <span id="cmdBusState" class="warn">—</span></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Cycle</th>
+          <th>Address</th>
+          <th>Data</th>
+          <th>CE</th>
+          <th>OE</th>
+          <th>WE</th>
+        </tr>
+      </thead>
+      <tbody id="cmdCycleBody"></tbody>
+    </table>
+
+    <p class="tiny">
+      For write/command cycles: CE = LOW, OE = HIGH, WE = LOW pulse. [DATASHEET]
+      For read cycles: CE = LOW, OE = LOW, WE = HIGH. [DATASHEET]
+    </p>
+  </div>
+</section>
+
+<!-- =========================== SIMULATOR =========================== -->
+<section id="simulator" class="tab">
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>Simulated AT49F512</h2>
+
+      <table>
+        <tr>
+          <th>Mode</th>
+          <td id="stateMode">Standard</td>
+        </tr>
+        <tr>
+          <th>Boot block lockout</th>
+          <td id="stateBoot">Unlocked</td>
+        </tr>
+        <tr>
+          <th>Address</th>
+          <td><input id="simAddr" value="2000" size="6" /></td>
+        </tr>
+        <tr>
+          <th>Data</th>
+          <td><input id="simData" value="55" size="4" /></td>
+        </tr>
+        <tr>
+          <th>Last read</th>
+          <td id="lastRead">—</td>
+        </tr>
+      </table>
+
+      <div class="row">
+        <button onclick="simRead()">Read Byte</button>
+        <button onclick="simProgram()">Program Byte</button>
+        <button onclick="simErase()">Chip Erase</button>
+      </div>
+
+      <div class="row">
+        <button onclick="simReadID()">Read Software ID</button>
+        <button onclick="simCheckLockout()">Check Boot Lockout</button>
+        <button onclick="simEnterID()">Enter ID Mode</button>
+        <button onclick="simExitID()">Exit ID Mode</button>
+      </div>
+
+      <div class="row">
+        <button class="danger" onclick="simEnableLockout()">Enable Boot Lockout</button>
+        <button onclick="resetSim()">Reset Simulator</button>
+      </div>
+
+      <p class="bad tiny">
+        In a real chip, boot block lockout is permanent once enabled. [DATASHEET]
+        This simulator can be reset, but real hardware cannot.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Operation log</h2>
+      <textarea id="simLog" spellcheck="false"></textarea>
+      <div class="row">
+        <button onclick="clearLog()">Clear Log</button>
+        <button onclick="downloadDump()">Download simulated flash_dump.bin</button>
+        <input type="file" id="loadDump" onchange="loadSimFile(event)" />
+      </div>
+      <p class="tiny">
+        The simulator enforces the main Flash rule: programming can only change bits from 1 → 0.
+        Only erase can change bits from 0 → 1. [DATASHEET]
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Selected byte bit view</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Bit</th>
+          <th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th>
+        </tr>
+      </thead>
+      <tbody id="simBitBody">
+        <tr>
+          <th>Value</th>
+          <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="row">
+      <button onclick="updateBitView()">Refresh Bit View</button>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== HEX INSPECTOR =========================== -->
+<section id="hex" class="tab">
+  <div class="card">
+    <h2>Hex inspector</h2>
+
+    <div class="row">
+      <label for="hexStart">Start address:</label>
+      <input id="hexStart" value="0000" size="6" />
+
+      <label for="hexLen">Length:</label>
+      <input id="hexLen" value="256" size="6" />
+
+      <button onclick="renderHex()">Refresh</button>
+      <button onclick="renderHexFromSim()">Follow simulator address</button>
+    </div>
+
+    <div class="row">
+      <div>Selected byte: <span id="hexSelected" class="accent">none</span></div>
+      <div class="spacer"></div>
+      <button onclick="useSelectedInSimulator()">Use selected address in simulator</button>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>Address</th>
+            <th>Data</th>
+            <th>ASCII</th>
+          </tr>
+        </thead>
+        <tbody id="hexBody"></tbody>
+      </table>
+    </div>
+
+    <p class="tiny">
+      File offset equals Flash address if the dump starts at 0x0000 and has no header.
+    </p>
+  </div>
+</section>
+
+<!-- =========================== BIT RULE CHECKER =========================== -->
+<section id="bit" class="tab">
+  <div class="card">
+    <h2>Flash bit rule checker</h2>
+    <p>
+      Enter the current Flash byte and desired byte. This tool tells you whether the desired byte can be
+      programmed directly, or whether erase is required.
+    </p>
+
+    <div class="row">
+      <label for="bitCurrent">Current byte:</label>
+      <input id="bitCurrent" value="FF" size="4" oninput="updateBitRule()" />
+
+      <label for="bitDesired">Desired byte:</label>
+      <input id="bitDesired" value="42" size="4" oninput="updateBitRule()" />
+
+      <button onclick="updateBitRule()">Check</button>
+    </div>
+
+    <div class="row">
+      <div>Current: <span id="bitCurrentBin" class="mono">—</span></div>
+      <div>Desired: <span id="bitDesiredBin" class="mono">—</span></div>
+      <div>Actual programmed result: <span id="bitActual" class="mono">—</span></div>
+    </div>
+
+    <div id="bitMessage" class="good"></div>
+
+    <br />
+
+    <table>
+      <thead>
+        <tr>
+          <th>Bit</th>
+          <th>7</th><th>6</th><th>5</th><th>4</th><th>3</th><th>2</th><th>1</th><th>0</th>
+        </tr>
+      </thead>
+      <tbody id="bitTableBody"></tbody>
+    </table>
+
+    <p class="tiny">
+      Rule from datasheet: a data “0” cannot be programmed back to a “1”; only erase operations can convert “0”s to “1”s. [DATASHEET]
+    </p>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>Example: 0xFF → 0x42</h2>
+      <pre>
+Current: 11111111
+Desired: 01000010
+      </pre>
+      <p class="good">
+        All changed bits are 1 → 0. If the current byte is truly 0xFF, 0x42 can be programmed directly.
+      </p>
+    </div>
+
+    <div class="card">
+      <h2>Example: 0x42 → 0xFF</h2>
+      <pre>
+Current: 01000010
+Desired: 11111111
+      </pre>
+      <p class="bad">
+        Several bits require 0 → 1. This requires erase.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== TIMING =========================== -->
+<section id="timing" class="tab">
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>AC read characteristics, AT49F512-55</h2>
+      <table>
+        <thead>
+          <tr><th>Symbol</th><th>Parameter</th><th>Max</th><th>Units</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>tACC</td><td>Address to output delay</td><td>55</td><td>ns</td></tr>
+          <tr><td>tCE</td><td>CE to output delay</td><td>55</td><td>ns</td></tr>
+          <tr><td>tOE</td><td>OE to output delay</td><td>30</td><td>ns</td></tr>
+          <tr><td>tDF</td><td>CE or OE to output float</td><td>25</td><td>ns</td></tr>
+          <tr><td>tOH</td><td>Output hold</td><td>0 min</td><td>ns</td></tr>
+        </tbody>
+      </table>
+      <p class="tiny">All values from datasheet AC read characteristics. [DATASHEET]</p>
+    </div>
+
+    <div class="card">
+      <h2>Program cycle characteristics</h2>
+      <table>
+        <thead>
+          <tr><th>Symbol</th><th>Parameter</th><th>Min</th><th>Typ</th><th>Max</th><th>Units</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>tBP</td><td>Byte programming time</td><td>—</td><td>10</td><td>50</td><td>µs</td></tr>
+          <tr><td>tAS</td><td>Address setup time</td><td>0</td><td>—</td><td>—</td><td>ns</td></tr>
+          <tr><td>tAH</td><td>Address hold time</td><td>50</td><td>—</td><td>—</td><td>ns</td></tr>
+          <tr><td>tDS</td><td>Data setup time</td><td>50</td><td>—</td><td>—</td><td>ns</td></tr>
+          <tr><td>tDH</td><td>Data hold time</td><td>0</td><td>—</td><td>—</td><td>ns</td></tr>
+          <tr><td>tWP</td><td>Write pulse width</td><td>90</td><td>—</td><td>—</td><td>ns</td></tr>
+          <tr><td>tWPH</td><td>Write pulse width high</td><td>90</td><td>—</td><td>—</td><td>ns</td></tr>
+          <tr><td>tEC</td><td>Erase cycle time</td><td>—</td><td>—</td><td>10</td><td>seconds</td></tr>
+        </tbody>
+      </table>
+      <p class="tiny">Values from datasheet program cycle characteristics. [DATASHEET]</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>WE-controlled program waveform concept</h2>
+    <pre>
+ADDRESS  =====&lt; valid address &gt;=====================
+CE       ____________________________________________
+OE       --------------------------------------------
+DATA     ========&lt; valid data &gt;======================
+WE       ---------___________-----------------------
+                  ^         ^
+                  |         |
+                  |         Data latched on rising edge
+                  Address latched on falling edge
+    </pre>
+    <p class="tiny">
+      The datasheet says addresses are latched on the falling edge of WE or CE, whichever occurs last,
+      and data is latched on the rising edge of WE or CE, whichever occurs first. [DATASHEET]
+    </p>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>DATA polling</h2>
+      <ul>
+        <li>Uses I/O7. [DATASHEET]</li>
+        <li>During programming, attempted read of last byte loaded gives complement on I/O7. [DATASHEET]</li>
+        <li>After completion, true data is valid. [DATASHEET]</li>
+      </ul>
+      <pre>
+Programming 0x42:
+0x42 = 01000010
+I/O7 true value = 0
+During programming, I/O7 complement = 1
+After completion, I/O7 = 0
+      </pre>
+    </div>
+
+    <div class="card">
+      <h2>Toggle bit</h2>
+      <ul>
+        <li>Uses I/O6. [DATASHEET]</li>
+        <li>I/O6 toggles during program or erase. [DATASHEET]</li>
+        <li>When operation completes, I/O6 stops toggling and valid data is read. [DATASHEET]</li>
+        <li>Any address may be used, but the address should not vary. [DATASHEET]</li>
+      </ul>
+      <pre>
+Read 1: I/O6 = 0
+Read 2: I/O6 = 1
+Read 3: I/O6 = 0
+Read 4: I/O6 = 1
+Read 5: I/O6 = stable → complete
+      </pre>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== SAFETY =========================== -->
+<section id="safety" class="tab">
+  <div class="card">
+    <h2>Do-not-damage-the-chip checklist</h2>
+    <div class="row">
+      <div class="progress" id="safetyProgress">0 / 0 checked</div>
+    </div>
+
+    <div class="checklist" id="safetyList">
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> Confirmed exact package: 32J PLCC, 32T TSOP, or 32V VSOP. [DATASHEET]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> Confirmed pin 1 orientation. [DATASHEET]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> VCC is 5V ±10%. [DATASHEET]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> GND is common between controller and Flash. [ENGINEERING KNOWLEDGE]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> No reversed chip. [DESIGN RECOMMENDATION]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> No shorts between adjacent pins. [DESIGN RECOMMENDATION]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> CE/OE/WE are not floating. [DESIGN RECOMMENDATION]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> Address bus is driven, not floating. [DESIGN RECOMMENDATION]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> Data bus direction is controlled. [ENGINEERING KNOWLEDGE]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> No bus contention between Flash and controller. [ENGINEERING KNOWLEDGE]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> If MCU is 3.3V, Flash output data is level shifted or buffered. [DESIGN RECOMMENDATION]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> Decoupling capacitor placed near VCC. [DESIGN RECOMMENDATION]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> Boot block lockout status checked before erase/program. [DATASHEET]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> Original data backed up before erase. [DESIGN RECOMMENDATION]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('safetyList','safetyProgress')"> Read hardware verified before attempting program/erase. [DESIGN RECOMMENDATION]</label>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <h2>Hardware data protection</h2>
+      <ul>
+        <li>VCC sense: if VCC is below 3.8V typical, program is inhibited. [DATASHEET]</li>
+        <li>Program inhibit: OE low, CE high, or WE high inhibits program cycles. [DATASHEET]</li>
+        <li>Noise filter: pulses less than 15 ns typical on WE or CE will not initiate a program cycle. [DATASHEET]</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Absolute maximum ratings</h2>
+      <table>
+        <tr><th>All input voltages, including NC pins</th><td>-0.6V to +6.25V [DATASHEET]</td></tr>
+        <tr><th>All output voltages</th><td>-0.6V to VCC + 0.6V [DATASHEET]</td></tr>
+        <tr><th>Voltage on OE</th><td>-0.6V to +13.5V [DATASHEET]</td></tr>
+        <tr><th>Storage temperature</th><td>-65°C to +150°C [DATASHEET]</td></tr>
+      </table>
+      <p class="bad tiny">
+        Absolute maximum ratings are stress ratings only. Do not design to them. [DATASHEET]
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- =========================== WORKFLOW =========================== -->
+<section id="workflow" class="tab">
+  <div class="card">
+    <h2>Safe engineering workflow</h2>
+    <div class="row">
+      <div class="progress" id="workflowProgress">0 / 0 checked</div>
+    </div>
+
+    <div class="checklist" id="workflowList">
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 1: Identify chip/package from marking and photo.</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 2: Build read-only hardware first.</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 3: Verify voltages and ground.</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 4: Read manufacturer/device ID: expect 0x1F / 0x03. [DATASHEET]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 5: Read first bytes repeatedly and confirm stability.</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 6: Dump entire 64KB.</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 7: Make backup files and checksums.</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 8: Check boot lockout before erase. [DATASHEET]</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 9: Erase only after backup is verified.</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 10: Program small test data outside boot block.</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 11: Verify test data.</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 12: Modify image and inspect bit-level changes.</label>
+      <label><input type="checkbox" onchange="updateCheckProgress('workflowList','workflowProgress')"> PHASE 13: Program modified image and verify full chip.</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Do not skip ahead</h2>
+    <pre>
+READ hardware proven?
+  └── No  → Debug wiring, pinout, power, bus states.
+  └── Yes
+        └── ID read correct?
+              └── No  → Debug command sequence and bus.
+              └── Yes
+                    └── Full dump stable?
+                          └── No  → Debug noise/contact/timing.
+                          └── Yes
+                                └── Backup saved?
+                                      └── No  → Save backup.
+                                      └── Yes → Erase/program allowed.
+    </pre>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  AT49F512 interactive lab. This page is educational and does not replace the actual datasheet or careful hardware design.
+</footer>
+
+<script>
+/* =====================================================
+   AT49F512 Interactive Lab JavaScript
+   ===================================================== */
+
+const FLASH_SIZE = 65536;
+const BOOT_START = 0x0000;
+const BOOT_END = 0x1FFF;
+
+let flash = new Uint8Array(FLASH_SIZE).fill(0xFF);
+let bootLocked = false;
+let idMode = false;
+let selectedHexAddr = null;
+
+const $ = id => document.getElementById(id);
+
+/* ---------------- Utilities ---------------- */
+
+function hex8(v) {
+  return (v & 0xFF).toString(16).toUpperCase().padStart(2, "0");
+}
+
+function hex16(v) {
+  return (v & 0xFFFF).toString(16).toUpperCase().padStart(4, "0");
+}
+
+function bin8(v) {
+  return (v & 0xFF).toString(2).toUpperCase().padStart(8, "0");
+}
+
+function parseHexInput(el, max) {
+  const s = el.value.trim();
+  if (!/^[0-9a-fA-F]{1,8}$/.test(s)) return null;
+  const v = parseInt(s, 16);
+  if (isNaN(v) || v < 0 || v > max) return null;
+  return v;
+}
+
+function getVal(id, max, fallback = 0) {
+  const el = $(id);
+  const v = parseHexInput(el, max);
+  if (v === null) {
+    el.style.borderColor = "red";
+    return fallback;
+  }
+  el.style.borderColor = "";
+  return v;
+}
+
+function requireHex(id, max) {
+  const el = $(id);
+  const v = parseHexInput(el, max);
+  if (v === null) {
+    el.style.borderColor = "red";
+    log(`Invalid hex value in ${id}: "${el.value}"`);
+    return null;
+  }
+  el.style.borderColor = "";
+  return v;
+}
+
+function asciiChar(b) {
+  return (b >= 0x20 && b <= 0x7E) ? String.fromCharCode(b) : ".";
+}
+
+/* ---------------- Tabs ---------------- */
+
+const tabButtons = document.querySelectorAll("nav button");
+
+tabButtons.forEach(btn => {
+  btn.addEventListener("click", () => showTab(btn.dataset.tab));
+});
+
+function showTab(id) {
+  document.querySelectorAll("section.tab").forEach(s => {
+    s.classList.toggle("active", s.id === id);
+  });
+  tabButtons.forEach(b => {
+    b.classList.toggle("active", b.dataset.tab === id);
+  });
+
+  if (id === "hex") renderHex();
+  if (id === "bit") updateBitRule();
+  if (id === "pinout") renderPins("all");
+}
+
+/* ---------------- Pinout ---------------- */
+
+const pins = [
+  {pin:1,  name:"A11", group:"address"},
+  {pin:2,  name:"A9",  group:"address"},
+  {pin:3,  name:"A8",  group:"address"},
+  {pin:4,  name:"A13", group:"address"},
+  {pin:5,  name:"A14", group:"address"},
+  {pin:6,  name:"NC",  group:"nc"},
+  {pin:7,  name:"WE",  group:"control"},
+  {pin:8,  name:"VCC", group:"power"},
+  {pin:9,  name:"NC",  group:"nc"},
+  {pin:10, name:"NC",  group:"nc"},
+  {pin:11, name:"A15", group:"address"},
+  {pin:12, name:"A12", group:"address"},
+  {pin:13, name:"A7",  group:"address"},
+  {pin:14, name:"A6",  group:"address"},
+  {pin:15, name:"A5",  group:"address"},
+  {pin:16, name:"A4",  group:"address"},
+  {pin:17, name:"A3",  group:"address"},
+  {pin:18, name:"A2",  group:"address"},
+  {pin:19, name:"A1",  group:"address"},
+  {pin:20, name:"A0",  group:"address"},
+  {pin:21, name:"I/O0", group:"data"},
+  {pin:22, name:"I/O1", group:"data"},
+  {pin:23, name:"I/O2", group:"data"},
+  {pin:24, name:"GND", group:"power"},
+  {pin:25, name:"I/O3", group:"data"},
+  {pin:26, name:"I/O4", group:"data"},
+  {pin:27, name:"I/O5", group:"data"},
+  {pin:28, name:"I/O6", group:"data", note:"Toggle bit [DATASHEET]"},
+  {pin:29, name:"I/O7", group:"data", note:"DATA polling [DATASHEET]"},
+  {pin:30, name:"CE", group:"control"},
+  {pin:31, name:"A10", group:"address"},
+  {pin:32, name:"OE", group:"control"}
+];
+
+function pinReadState(p) {
+  if (p.group === "address") return "Input: selected address";
+  if (p.group === "data") return "Flash drives data out";
+  if (p.name === "CE") return "LOW";
+  if (p.name === "OE") return "LOW";
+  if (p.name === "WE") return "HIGH";
+  if (p.name === "VCC") return "5V";
+  if (p.name === "GND") return "0V";
+  return "No connect";
+}
+
+function pinProgramState(p) {
+  if (p.group === "address") return "Input: command/target address";
+  if (p.group === "data") return "Controller drives data in";
+  if (p.name === "CE") return "LOW";
+  if (p.name === "OE") return "HIGH";
+  if (p.name === "WE") return "LOW pulse";
+  if (p.name === "VCC") return "5V";
+  if (p.name === "GND") return "0V";
+  return "No connect";
+}
+
+function pinNotes(p) {
+  if (p.note) return p.note;
+  if (p.name === "NC") return "No connect [DATASHEET]";
+  if (p.name === "VCC") return "5V ±10% [DATASHEET]";
+  if (p.name === "GND") return "Ground";
+  if (p.name === "WE") return "Write enable [DATASHEET]";
+  if (p.name === "CE") return "Chip enable [DATASHEET]";
+  if (p.name === "OE") return "Output enable [DATASHEET]";
+  if (p.group === "address") return "Address input [DATASHEET]";
+  if (p.group === "data") return "Bidirectional data [DATASHEET]";
+  return "";
+}
+
+function renderPins(filter = "all") {
+  const tbody = $("pinTbody");
+  tbody.innerHTML = "";
+
+  pins
+    .filter(p => filter === "all" || p.group === filter)
+    .forEach(p => {
+      const tr = document.createElement("tr");
+      tr.className = `pin-${p.group}`;
+      tr.innerHTML = `
+        <td>${p.pin}</td>
+        <td><strong>${p.name}</strong></td>
+        <td>${p.group}</td>
+        <td>${pinReadState(p)}</td>
+        <td>${pinProgramState(p)}</td>
+        <td>${pinNotes(p)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+}
+
+/* ---------------- Bus states ---------------- */
+
+const busModes = {
+  read: {
+    CE: "LOW",
+    OE: "LOW",
+    WE: "HIGH",
+    driver: "Flash drives I/O0-I/O7",
+    notes: "Read mode. Data stored at selected address is asserted on outputs. [DATASHEET]"
+  },
+  program: {
+    CE: "LOW",
+    OE: "HIGH",
+    WE: "LOW pulse",
+    driver: "Controller drives I/O0-I/O7",
+    notes: "Program/command write mode. OE must be high only when WE and CE are both low. [DATASHEET]"
+  },
+  standby: {
+    CE: "HIGH",
+    OE: "X",
+    WE: "X",
+    driver: "Flash outputs high-Z",
+    notes: "Standby/write inhibit. Outputs high impedance. [DATASHEET]"
+  },
+  outputDisable: {
+    CE: "X",
+    OE: "HIGH",
+    WE: "X",
+    driver: "Flash outputs high-Z",
+    notes: "Output disable. Outputs high impedance. [DATASHEET]"
+  },
+  idRead: {
+    CE: "LOW",
+    OE: "LOW",
+    WE: "HIGH",
+    driver: "Flash drives manufacturer/device/lockout code",
+    notes: "After software ID entry, read address 0x0000 for manufacturer, 0x0001 for device, 0x0002 for boot lockout. [DATASHEET]"
+  }
+};
+
+function updateBus() {
+  const mode = $("busMode").value;
+  const b = busModes[mode];
+
+  $("busCE").textContent = b.CE;
+  $("busOE").textContent = b.OE;
+  $("busWE").textContent = b.WE;
+  $("busDriver").textContent = b.driver;
+  $("busNotes").textContent = b.notes;
+}
+
+/* ---------------- Command player ---------------- */
+
+let activeCmd = null;
+let cmdStep = 0;
+
+function commandCycles(cmd, addr, data) {
+  if (cmd === "read") {
+    return [{addr: hex16(addr), data: "DOUT", mode: "read"}];
+  }
+
+  if (cmd === "byteProgram") {
+    return [
+      {addr:"5555", data:"AA", mode:"write"},
+      {addr:"2AAA", data:"55", mode:"write"},
+      {addr:"5555", data:"A0", mode:"write"},
+      {addr:hex16(addr), data:hex8(data), mode:"write"}
+    ];
+  }
+
+  if (cmd === "chipErase") {
+    return [
+      {addr:"5555", data:"AA", mode:"write"},
+      {addr:"2AAA", data:"55", mode:"write"},
+      {addr:"5555", data:"80", mode:"write"},
+      {addr:"5555", data:"AA", mode:"write"},
+      {addr:"2AAA", data:"55", mode:"write"},
+      {addr:"5555", data:"10", mode:"write"}
+    ];
+  }
+
+  if (cmd === "idEntry") {
+    return [
+      {addr:"5555", data:"AA", mode:"write"},
+      {addr:"2AAA", data:"55", mode:"write"},
+      {addr:"5555", data:"90", mode:"write"}
+    ];
+  }
+
+  if (cmd === "idExit") {
+    return [
+      {addr:"5555", data:"AA", mode:"write"},
+      {addr:"2AAA", data:"55", mode:"write"},
+      {addr:"5555", data:"F0", mode:"write"}
+    ];
+  }
+
+  if (cmd === "lockout") {
+    return [
+      {addr:"5555", data:"AA", mode:"write"},
+      {addr:"2AAA", data:"55", mode:"write"},
+      {addr:"5555", data:"80", mode:"write"},
+      {addr:"5555", data:"AA", mode:"write"},
+      {addr:"2AAA", data:"55", mode:"write"},
+      {addr:"5555", data:"40", mode:"write"}
+    ];
+  }
+
+  return [];
+}
+
+function getCommandDef() {
+  const cmd = $("cmdSelect").value;
+  const addr = getVal("cmdAddr", 0xFFFF, 0x2000);
+  const data = getVal("cmdData", 0xFF, 0x55);
+
+  return {
+    cmd,
+    addr,
+    data,
+    cycles: commandCycles(cmd, addr, data)
+  };
+}
+
+function loadCommand() {
+  activeCmd = getCommandDef();
+  cmdStep = 0;
+
+  const tbody = $("cmdCycleBody");
+  tbody.innerHTML = "";
+
+  activeCmd.cycles.forEach((c, i) => {
+    const tr = document.createElement("tr");
+    tr.id = "cmdRow" + i;
+    tr.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${c.addr}</td>
+      <td>${c.data}</td>
+      <td>${c.mode === "read" ? "LOW" : "LOW"}</td>
+      <td>${c.mode === "read" ? "LOW" : "HIGH"}</td>
+      <td>${c.mode === "read" ? "HIGH" : "LOW pulse"}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  $("cmdStatus").textContent = "Ready";
+  $("cmdBusState").textContent = "—";
+  $("applyCmd").disabled = true;
+}
+
+function stepCommand() {
+  if (!activeCmd) loadCommand();
+
+  if (cmdStep >= activeCmd.cycles.length) return;
+
+  document.querySelectorAll("#cmdCycleBody tr").forEach(tr => {
+    tr.classList.remove("active-cycle");
+  });
+
+  const row = $("cmdRow" + cmdStep);
+  row.classList.add("active-cycle");
+
+  const c = activeCmd.cycles[cmdStep];
+
+  if (c.mode === "read") {
+    $("cmdBusState").textContent = "READ: CE=LOW, OE=LOW, WE=HIGH, Flash drives I/O [DATASHEET]";
+  } else {
+    $("cmdBusState").textContent = "WRITE: CE=LOW, OE=HIGH, WE=LOW pulse, controller drives I/O [DATASHEET]";
+  }
+
+  cmdStep++;
+
+  if (cmdStep >= activeCmd.cycles.length) {
+    $("cmdStatus").textContent = "Sequence complete";
+    $("applyCmd").disabled = false;
+  } else {
+    $("cmdStatus").textContent = `Cycle ${cmdStep + 1} ready`;
+  }
+}
+
+function resetCommand() {
+  loadCommand();
+}
+
+function applyCommand() {
+  if (!activeCmd) return;
+
+  const cmd = activeCmd.cmd;
+  const addr = activeCmd.addr;
+  const data = activeCmd.data;
+
+  log(`--- Applying command player result: ${cmd} ---`);
+
+  if (cmd === "read") {
+    $("simAddr").value = hex16(addr);
+    simRead();
+  }
+
+  if (cmd === "byteProgram") {
+    programByteCore(addr, data, false);
+  }
+
+  if (cmd === "chipErase") {
+    eraseCore(false);
+  }
+
+  if (cmd === "idEntry") {
+    enterIdCore(false);
+  }
+
+  if (cmd === "idExit") {
+    exitIdCore(false);
+  }
+
+  if (cmd === "lockout") {
+    lockBootCore(false);
+  }
+
+  updateAll();
+}
+
+/* ---------------- Simulator log ---------------- */
+
+function log(msg) {
+  const el = $("simLog");
+  el.value += msg + "\n";
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearLog() {
+  $("simLog").value = "";
+}
+
+function logCommandSequence(name, cycles) {
+  log(`Required ${name} command sequence [DATASHEET]:`);
+  cycles.forEach((c, i) => {
+    log(`  ${i + 1}. Addr ${c.addr}, Data ${c.data}`);
+  });
+}
+
+/* ---------------- Simulator core ---------------- */
+
+function updateState() {
+  $("stateMode").textContent = idMode ? "Software Product ID" : "Standard";
+  $("stateMode").className = idMode ? "warn" : "good";
+
+  $("stateBoot").textContent = bootLocked ? "LOCKED" : "Unlocked";
+  $("stateBoot").className = bootLocked ? "bad" : "good";
+}
+
+function inBootRange(addr) {
+  return addr >= BOOT_START && addr <= BOOT_END;
+}
+
+function programByteCore(addr, data, logCmd = true) {
+  if (idMode) {
+    log("WARNING: Device appears to be in software ID mode. Exit ID mode before normal programming. [DATASHEET]");
+  }
+
+  if (logCmd) {
+    logCommandSequence("Byte Program", [
+      {addr:"5555", data:"AA"},
+      {addr:"2AAA", data:"55"},
+      {addr:"5555", data:"A0"},
+      {addr:hex16(addr), data:hex8(data)}
+    ]);
+  }
+
+  if (bootLocked && inBootRange(addr)) {
+    log(`FAIL: Boot block lockout is enabled. Address 0x${hex16(addr)} is inside 0x0000-0x1FFF and cannot be programmed. [DATASHEET]`);
+    return false;
+  }
+
+  const old = flash[addr];
+  const result = old & data;
+
+  flash[addr] = result;
+
+  log(`PROGRAM: address 0x${hex16(addr)}, target data 0x${hex8(data)} (${bin8(data)})`);
+  log(`Previous byte: 0x${hex8(old)} (${bin8(old)})`);
+  log("Internal program pulses generated by device. tBP typical 10 µs, max 50 µs. [DATASHEET]");
+
+  const io7During = ((~data) & 0x80) ? 1 : 0;
+  const io7After = (data & 0x80) ? 1 : 0;
+  log(`DATA polling: during program I/O7 = ${io7During}, after complete I/O7 = ${io7After}. [DATASHEET]`);
+  log("Toggle bit I/O6 toggles until complete. [DATASHEET]");
+
+  const actual = flash[addr];
+  log(`Actual programmed result: 0x${hex8(actual)} (${bin8(actual)})`);
+
+  if (actual === data) {
+    log(`VERIFY PASS: 0x${hex16(addr)} = 0x${hex8(actual)}`);
+    updateAll();
+    return true;
+  } else {
+    log(`VERIFY FAIL: desired 0x${hex8(data)}, actual 0x${hex8(actual)}.`);
+    log("Some bits required 0 -> 1. Programming cannot do that. Erase required. [DATASHEET]");
+    updateAll();
+    return false;
+  }
+}
+
+function eraseCore(logCmd = true) {
+  if (idMode) {
+    log("WARNING: Device appears to be in software ID mode. Exit ID mode before chip erase. [DATASHEET]");
+  }
+
+  if (logCmd) {
+    logCommandSequence("Chip Erase", [
+      {addr:"5555", data:"AA"},
+      {addr:"2AAA", data:"55"},
+      {addr:"5555", data:"80"},
+      {addr:"5555", data:"AA"},
+      {addr:"2AAA", data:"55"},
+      {addr:"5555", data:"10"}
+    ]);
+  }
+
+  log("Chip erase started. Internal timer active; no external clocks required. [DATASHEET]");
+  log("Maximum erase time tEC = 10 seconds. [DATASHEET]");
+
+  if (bootLocked) {
+    for (let i = 0x2000; i < FLASH_SIZE; i++) {
+      flash[i] = 0xFF;
+    }
+    log("Boot block lockout enabled: data in boot sector 0x0000-0x1FFF was NOT erased. [DATASHEET]");
+  } else {
+    flash.fill(0xFF);
+    log("Entire chip erased. All bytes should now read 0xFF. [DATASHEET]");
+  }
+
+  updateAll();
+}
+
+function enterIdCore(logCmd = true) {
+  if (logCmd) {
+    logCommandSequence("Product ID Entry", [
+      {addr:"5555", data:"AA"},
+      {addr:"2AAA", data:"55"},
+      {addr:"5555", data:"90"}
+    ]);
+  }
+
+  idMode = true;
+  log("Entered software product identification mode. [DATASHEET]");
+  updateAll();
+}
+
+function exitIdCore(logCmd = true) {
+  if (logCmd) {
+    logCommandSequence("Product ID Exit", [
+      {addr:"5555", data:"AA"},
+      {addr:"2AAA", data:"55"},
+      {addr:"5555", data:"F0"}
+    ]);
+  }
+
+  idMode = false;
+  log("Exited software product identification mode. Device returns to standard operation. [DATASHEET]");
+  updateAll();
+}
+
+function lockBootCore(logCmd = true) {
+  if (bootLocked) {
+    log("Boot block lockout is already enabled.");
+    return;
+  }
+
+  if (logCmd) {
+    logCommandSequence("Boot Block Lockout", [
+      {addr:"5555", data:"AA"},
+      {addr:"2AAA", data:"55"},
+      {addr:"5555", data:"80"},
+      {addr:"5555", data:"AA"},
+      {addr:"2AAA", data:"55"},
+      {addr:"5555", data:"40"}
+    ]);
+  }
+
+  log("Pause 1 second as shown in boot block lockout algorithm. [DATASHEET]");
+  bootLocked = true;
+  log("BOOT BLOCK LOCKOUT ENABLED.");
+  log("In a real device, the boot sector is permanently protected from being reprogrammed. [DATASHEET]");
+  updateAll();
+}
+
+/* ---------------- Simulator UI actions ---------------- */
+
+function simRead() {
+  const addr = requireHex("simAddr", 0xFFFF);
+  if (addr === null) return;
+
+  let val;
+  let note = "";
+
+  if (idMode) {
+    if (addr === 0x0000) {
+      val = 0x1F;
+      note = "Manufacturer code [DATASHEET]";
+    } else if (addr === 0x0001) {
+      val = 0x03;
+      note = "Device code [DATASHEET]";
+    } else if (addr === 0x0002) {
+      val = bootLocked ? 0x01 : 0x00;
+      note = bootLocked ? "Boot lockout enabled, I/O0 high [DATASHEET]" : "Boot block programmable, I/O0 low [DATASHEET]";
+    } else {
+      log("In software ID mode, use address 0x0000, 0x0001, or 0x0002 for ID/lockout information. [DATASHEET]");
+      return;
+    }
+  } else {
+    val = flash[addr];
+    note = "Standard read";
+  }
+
+  log(`READ: address 0x${hex16(addr)}, CE=LOW, OE=LOW, WE=HIGH. [DATASHEET]`);
+  log(`Data = 0x${hex8(val)} (${bin8(val)}) — ${note}`);
+
+  $("lastRead").textContent = `0x${hex8(val)}`;
+  updateBitView(addr, val);
+}
+
+function simProgram() {
+  const addr = requireHex("simAddr", 0xFFFF);
+  if (addr === null) return;
+
+  const data = requireHex("simData", 0xFF);
+  if (data === null) return;
+
+  programByteCore(addr, data, true);
+}
+
+function simErase() {
+  eraseCore(true);
+}
+
+function simReadID() {
+  enterIdCore(true);
+  log("Read address 0x0000 with A0=VIL, A1-A15=VIL: Manufacturer Code = 0x1F. [DATASHEET]");
+  log("Read address 0x0001 with A0=VIH, A1-A15=VIL: Device Code = 0x03. [DATASHEET]");
+  exitIdCore(true);
+}
+
+function simCheckLockout() {
+  enterIdCore(true);
+
+  const locked = bootLocked;
+  log(`Read address 0x0002 in software product identification mode. [DATASHEET]`);
+  log(`I/O0 = ${locked ? 1 : 0}`);
+
+  if (locked) {
+    log("Boot block lockout feature has been activated. Boot block cannot be programmed. [DATASHEET]");
+  } else {
+    log("Boot block can be programmed. [DATASHEET]");
+  }
+
+  exitIdCore(true);
+}
+
+function simEnterID() {
+  enterIdCore(true);
+}
+
+function simExitID() {
+  exitIdCore(true);
+}
+
+function simEnableLockout() {
+  if (!confirm("Enable boot block lockout in simulator? In a real chip this is permanent.")) return;
+  lockBootCore(true);
+}
+
+function resetSim() {
+  flash.fill(0xFF);
+  bootLocked = false;
+  idMode = false;
+  log("--- Simulator reset. Flash erased to 0xFF, boot lockout disabled. ---");
+  updateAll();
+}
+
+function downloadDump() {
+  const blob = new Blob([flash], {type: "application/octet-stream"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "flash_sim_dump.bin";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  log("Downloaded simulated flash image as flash_sim_dump.bin.");
+}
+
+function loadSimFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  file.arrayBuffer().then(buf => {
+    const arr = new Uint8Array(buf);
+    flash.fill(0xFF);
+    const len = Math.min(arr.length, FLASH_SIZE);
+    flash.set(arr.subarray(0, len));
+
+    log(`Loaded ${len} bytes from "${file.name}" into simulator memory.`);
+    log("This is an inspection/load operation in the simulator, not a real Flash program sequence.");
+
+    if (arr.length > FLASH_SIZE) {
+      log("Warning: file is larger than 64KB. Extra bytes were ignored.");
+    }
+
+    updateAll();
+  });
+}
+
+/* ---------------- Bit view ---------------- */
+
+function updateBitView(addr = null, value = null) {
+  if (addr === null) {
+    addr = requireHex("simAddr", 0xFFFF);
+    if (addr === null) return;
+  }
+
+  if (value === null) {
+    if (idMode) {
+      if (addr === 0x0000) value = 0x1F;
+      else if (addr === 0x0001) value = 0x03;
+      else if (addr === 0x0002) value = bootLocked ? 0x01 : 0x00;
+      else value = 0x00;
+    } else {
+      value = flash[addr];
+    }
+  }
+
+  const tbody = $("simBitBody");
+  tbody.innerHTML = "";
+
+  const tr = document.createElement("tr");
+  tr.innerHTML = "<th>Value</th>";
+
+  for (let bit = 7; bit >= 0; bit--) {
+    const b = (value >> bit) & 1;
+    const td = document.createElement("td");
+    td.textContent = b;
+    td.className = b ? "good" : "bad";
+    tr.appendChild(td);
+  }
+
+  tbody.appendChild(tr);
+}
+
+/* ---------------- Hex inspector ---------------- */
+
+function renderHex() {
+  const start = getVal("hexStart", 0xFFFF, 0x0000);
+  let len = parseInt($("hexLen").value, 10);
+
+  if (isNaN(len) || len < 16) len = 16;
+  if (len > 1024) len = 1024;
+
+  const tbody = $("hexBody");
+  tbody.innerHTML = "";
+
+  const end = Math.min(start + len, FLASH_SIZE);
+
+  for (let row = start; row < end; row += 16) {
+    const tr = document.createElement("tr");
+
+    const addrTd = document.createElement("td");
+    addrTd.className = "mono";
+    addrTd.textContent = hex16(row);
+    tr.appendChild(addrTd);
+
+    const dataTd = document.createElement("td");
+    let ascii = "";
+
+    for (let i = 0; i < 16; i++) {
+      const addr = row + i;
+
+      if (addr < end) {
+        const b = flash[addr];
+        ascii += asciiChar(b);
+
+        const btn = document.createElement("button");
+        btn.className = "byte";
+        btn.textContent = hex8(b);
+        btn.dataset.addr = addr;
+        if (selectedHexAddr === addr) btn.classList.add("selected");
+        btn.onclick = () => selectHexByte(addr);
+        dataTd.appendChild(btn);
+        dataTd.appendChild(document.createTextNode(" "));
+      } else {
+        ascii += " ";
+        const span = document.createElement("span");
+        span.className = "byte";
+        span.textContent = "--";
+        dataTd.appendChild(span);
+        dataTd.appendChild(document.createTextNode(" "));
+      }
+    }
+
+    tr.appendChild(dataTd);
+
+    const asciiTd = document.createElement("td");
+    asciiTd.className = "mono";
+    asciiTd.textContent = ascii;
+    tr.appendChild(asciiTd);
+
+    tbody.appendChild(tr);
+  }
+}
+
+function selectHexByte(addr) {
+  selectedHexAddr = addr;
+
+  document.querySelectorAll(".byte").forEach(el => {
+    el.classList.toggle("selected", Number(el.dataset.addr) === addr);
+  });
+
+  $("hexSelected").textContent = `0x${hex16(addr)} = 0x${hex8(flash[addr])}`;
+  $("simAddr").value = hex16(addr);
+  updateBitView(addr, flash[addr]);
+}
+
+function useSelectedInSimulator() {
+  if (selectedHexAddr === null) {
+    log("No hex byte selected.");
+    return;
+  }
+
+  $("simAddr").value = hex16(selectedHexAddr);
+  updateBitView(selectedHexAddr, flash[selectedHexAddr]);
+  showTab("simulator");
+}
+
+function renderHexFromSim() {
+  const addr = requireHex("simAddr", 0xFFFF);
+  if (addr === null) return;
+
+  const rowStart = addr & 0xFFF0;
+  $("hexStart").value = hex16(rowStart);
+  renderHex();
+  selectHexByte(addr);
+}
+
+function gotoAddress(addr) {
+  $("simAddr").value = hex16(addr);
+  $("hexStart").value = hex16(addr & 0xFFF0);
+  selectedHexAddr = addr;
+  renderHex();
+  selectHexByte(addr);
+  showTab("hex");
+}
+
+/* ---------------- Bit rule checker ---------------- */
+
+function updateBitRule() {
+  const current = getVal("bitCurrent", 0xFF, 0xFF);
+  const desired = getVal("bitDesired", 0xFF, 0x00);
+
+  $("bitCurrentBin").textContent = bin8(current);
+  $("bitDesiredBin").textContent = bin8(desired);
+
+  const actual = current & desired;
+  $("bitActual").textContent = `0x${hex8(actual)} (${bin8(actual)})`;
+
+  const possible = actual === desired;
+  const noChange = current === desired;
+
+  const msg = $("bitMessage");
+
+  if (noChange) {
+    msg.className = "good";
+    msg.textContent = "No change required.";
+  } else if (possible) {
+    msg.className = "good";
+    msg.textContent = "Can potentially be programmed without erase because all changed bits are 1 -> 0. However, robust workflow usually erases first. [DATASHEET]";
+  } else {
+    msg.className = "bad";
+    msg.textContent = "Erase required. One or more bits require 0 -> 1, which programming cannot do. [DATASHEET]";
+  }
+
+  const tbody = $("bitTableBody");
+  tbody.innerHTML = "";
+
+  const currentRow = document.createElement("tr");
+  currentRow.innerHTML = "<th>Current</th>";
+
+  const desiredRow = document.createElement("tr");
+  desiredRow.innerHTML = "<th>Desired</th>";
+
+  const actionRow = document.createElement("tr");
+  actionRow.innerHTML = "<th>Action</th>";
+
+  for (let bit = 7; bit >= 0; bit--) {
+    const c = (current >> bit) & 1;
+    const d = (desired >> bit) & 1;
+
+    const cTd = document.createElement("td");
+    cTd.textContent = c;
+    currentRow.appendChild(cTd);
+
+    const dTd = document.createElement("td");
+    dTd.textContent = d;
+    desiredRow.appendChild(dTd);
+
+    const aTd = document.createElement("td");
+
+    if (c === d) {
+      aTd.textContent = "no change";
+      aTd.className = "good";
+    } else if (c === 1 && d === 0) {
+      aTd.textContent = "1→0 OK";
+      aTd.className = "good";
+    } else {
+      aTd.textContent = "0→1 erase";
+      aTd.className = "bad";
+    }
+
+    actionRow.appendChild(aTd);
+  }
+
+  tbody.appendChild(currentRow);
+  tbody.appendChild(desiredRow);
+  tbody.appendChild(actionRow);
+}
+
+/* ---------------- Checklists ---------------- */
+
+function updateCheckProgress(listId, progressId) {
+  const boxes = document.querySelectorAll(`#${listId} input[type="checkbox"]`);
+  const total = boxes.length;
+  let checked = 0;
+
+  boxes.forEach(b => {
+    if (b.checked) checked++;
+  });
+
+  $(progressId).textContent = `${checked} / ${total} checked`;
+}
+
+/* ---------------- Global update ---------------- */
+
+function updateAll() {
+  updateState();
+  updateBitView();
+  if (document.getElementById("hex").classList.contains("active")) {
+    renderHex();
+  }
+}
+
+/* ---------------- Init ---------------- */
+
+window.addEventListener("load", () => {
+  renderPins("all");
+  updateBus();
+  loadCommand();
+  renderHex();
+  updateBitRule();
+  updateState();
+  updateBitView();
+  updateCheckProgress("safetyList", "safetyProgress");
+  updateCheckProgress("workflowList", "workflowProgress");
+
+  log("AT49F512 simulator initialized.");
+  log("Memory is initialized to 0xFF, the erased state. [DATASHEET]");
+  log("Manufacturer code should be 0x1F, device code 0x03. [DATASHEET]");
+});
+</script>
+
+</body>
+</html>
